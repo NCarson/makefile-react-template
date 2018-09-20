@@ -47,7 +47,7 @@ TEMPL_DIR := templates
 LIB_DIR := lib
 SRC_DIR := src
 PROD_DIR := /var/www/html
-IDX_JSON := templates/index.json
+IDX_JSON := index.json
 
 DEP_FILE := $(LIB_DIR)/.deps
 SRC_FILES := $(shell find $(SRC_DIR)/ -name '*.js')
@@ -58,15 +58,14 @@ COMPRESS_FILES := $(shell find $(INDEX_DIR)/ -name '*.svg' -o -name '*.html' -o 
 COMPRESS_FILES_GZ := $(patsubst %,%.gz,$(COMPRESS_FILES))
 
 #libs that should not go in vendor build
-BROKEN_LIBS := shallow-equal inline-style-prefixer @nivo
+BROKEN_LIBS := shallow-equal inline-style-prefixer
 #CDN libs will be excluded from the vender build
 # but you have to set them up yourself
 #
 REACTSTRAP_LIBS := reactstrap classnames lodash.isfunction lodash.isobject \
 	lodash.tonumber react-lifecycles-compat react-popper react-transition-group
 
-CDN_LIBS := $(BROKEN_LIBS) react-dom $(REACTSTRAP_LIBS) \ object-assign babel-runtime axios \ react-router react-router-dom urijs \ cm-chessboard-es5 react-autowhatever react-autosuggest \
-	react-themable
+CDN_LIBS := $(BROKEN_LIBS) react-dom $(REACTSTRAP_LIBS) \ object-assign 
 
 EXC_MODULES := python3 script/get_modules.py `pwd`/node_modules/ $(DEP_FILE) "-x="
 INC_MODULES := python3 script/get_modules.py `pwd`/node_modules/ $(DEP_FILE) "-r=" "$(CDN_LIBS)"
@@ -88,26 +87,12 @@ ifdef NODE_DEV
 	CDN_URLS := <script src='https://unpkg.com/prop-types@15.6.2/prop-types.min.js'></script> \
 		<script src='https://unpkg.com/react@16.4.1/umd/react.development.js'></script> \
 		<script src='https://unpkg.com/react-dom@16.4.1/umd/react-dom.development.js'></script> \
-		<script src='https://unpkg.com/reactstrap@6.4.0/dist/reactstrap.full.js'></script> \
-		<script src='https://unpkg.com/axios@0.18.0/dist/axios.min.js'></script> \
-		<script src='https://unpkg.com/react-router@4.3.1/umd/react-router.min.js'></script> \
-		<script src='https://unpkg.com/react-router-dom@4.3.1/umd/react-router-dom.min.js'></script> \
-		<script src='https://unpkg.com/urijs@1.19.1/src/URI.min.js'></script> \
-		<script src='https://unpkg.com/cm-chessboard-es5@2.11.2-6.4/dist/cm-chessboard.umd.js'></script> \
-		<script src='https://unpkg.com/react-autowhatever@10.1.2/dist/standalone/autowhatever.min.js'></script> \
-		<script src='https://unpkg.com/react-autosuggest@9.4.0/dist/standalone/autosuggest.min.js'></script>
+		<script src='https://unpkg.com/reactstrap@6.4.0/dist/reactstrap.full.js'></script>
 else
 	CDN_URLS := <script src='https://unpkg.com/prop-types@15.6.2/prop-types.min.js'></script> \
 		<script src='https://unpkg.com/react@16.4.1/umd/react.production.min.js'></script> \
 		<script src='https://unpkg.com/react-dom@16.4.1/umd/react-dom.production.min.js'></script> \
-		<script src='https://unpkg.com/reactstrap@6.4.0/dist/reactstrap.full.min.js'></script> \
-		<script src='https://unpkg.com/axios@0.18.0/dist/axios.min.js'></script> \
-		<script src='https://unpkg.com/react-router@4.3.1/umd/react-router.min.js'></script> \
-		<script src='https://unpkg.com/react-router-dom@4.3.1/umd/react-router-dom.min.js'></script> \
-		<script src='https://unpkg.com/urijs@1.19.1/src/URI.min.js'></script> \
-		<script src='https://unpkg.com/cm-chessboard-es5@2.11.2-6.4/dist/cm-chessboard.umd.js'></script> \
-		<script src='https://unpkg.com/react-autowhatever@10.1.2/dist/standalone/autowhatever.min.js'></script> \
-		<script src='https://unpkg.com/react-autosuggest@9.4.0/dist/standalone/autosuggest.min.js'></script>
+		<script src='https://unpkg.com/reactstrap@6.4.0/dist/reactstrap.full.min.js'></script>
 endif
 
 ###############################################################################
@@ -120,10 +105,10 @@ all: $(COMPRESS_FILES_GZ)
 
 # remove the build lib and dist files
 clean:
-	rm $(LIB_DIR)/* -fr
+	rm $(LIB_DIR) -fr
 	rm $(DIST_DIR)/* -f 
 	rm $(DEP_FILE) -f
-	rm $(INDEX_DIR)/index.html -f
+	rm $(INDEX_DIR)/index.html  $(INDEX_DIR)/*.gz -f
 
 # remove the dist bundle js files
 clean_dist:
@@ -148,7 +133,7 @@ install:
 .PRECIOUS: $(INDEX_DIR)/index.html
 $(INDEX_DIR)/index.html: $(TEMPL_DIR)/index.jinja
 	jq '.cdn_urls = "$(CDN_URLS)"' $(IDX_JSON) | sponge $(IDX_JSON)
-	$(NUNJUCKS) $(TEMPL_DIR)/index.jinja $(TEMPL_DIR)/index.json
+	$(NUNJUCKS) $(TEMPL_DIR)/index.jinja $(IDX_JSON)
 	mv $(TEMPL_DIR)/index.html $(INDEX_DIR)
 
 
@@ -168,7 +153,6 @@ endif
 
 $(TARGET): $(LIB_DIR)/config.js $(LIB_FILES) $(DEP_FILE) 
 	$(BROWSERIFY) $(BROWSERIFY_SHIM) -d -o $(TARGET)  $(shell find $(LIB_DIR) -type f -name '*.js') $(shell $(EXC_MODULES))
-	echo $(shell date +%s) > $(LIB_DIR)/.bundle.time
 	jq '.bundle_time = "$(shell date +%s)"' $(IDX_JSON) | sponge $(IDX_JSON)
 
 # depends if the node_moules changed
@@ -188,8 +172,8 @@ $(LIB_DIR)/%: $(SRC_DIR)/%
 
 $(SRC_DIR)/config.js:
 ifdef NODE_DEV
-	cd src && ln -s ../config.dev.js config.js
+	cd src && ln -s ../config/config.dev.js config.js
 else
-	cd src && ln -s ../config.prod.js config.js
+	cd src && ln -s ../config/config.prod.js config.js
 endif
 

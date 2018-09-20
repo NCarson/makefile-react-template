@@ -6,9 +6,9 @@ if not File.exist?('src/config.js')
 end
 
 if dev > 0
-    key = "../config.dev.js"
+    key = "../config/config.dev.js"
 else
-    key = "../config.prod.js"
+    key = "../config/config.prod.js"
 end
 
 if not File.readlink("src/config.js") == key
