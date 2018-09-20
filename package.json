@@ -2,7 +2,10 @@
   "name": "makefile-node-template",
   "version": "1.0.0",
   "description": "Makefile to compile node.js incrementally",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -23,7 +26,8 @@
     "browserify-global-shim": "^1.0.3",
     "eslint": "^5.3.0",
     "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-react": "^7.11.1"
+    "eslint-plugin-react": "^7.11.1",
+    "rollup-plugin-node-resolve": "^3.4.0"
   },
   "browserify-global-shim": {
     "react": "React",

@@ -5,6 +5,19 @@
 # https://shinglyu.github.io/web/2018/02/08/minimal-react-js-without-a-build-step-updated.html
 #
 
+#http://dev.topheman.com/package-a-module-for-npm-in-commonjs-es2015-umd-with-babel-and-rollup/
+#https://medium.freecodecamp.org/anatomy-of-js-module-systems-and-building-libraries-fadcd8dbd0e
+
+#package.json
+#"unpkg": "dist/my-awesome-lib.min.js",
+
+#TODO
+# fix empty index.json 
+
+#XXX fill this out to publish (make dist)
+MAIN_ENTRY := 
+MODULE_NAME :=
+
 NODE_DEV=1
 
 #FLAGS:
@@ -20,13 +33,18 @@ FAKING_IT := $(shell ruby script/test_config.rb $(NODE_DEV))
 # commands
 ###############################################################################
 
-# these should be installed globally
-BABEL := babel --plugins transform-react-jsx --plugins transform-class-properties --presets=es2015,react
-BROWSERIFY := browserify
+# plugins
+BABEL_PLUGINS := --plugins transform-react-jsx --plugins transform-class-properties
 BROWSERIFY_SHIM := --transform browserify-global-shim 
+
+# these should be installed globally
+BABEL := babel $(BABEL_PLUGINS) --presets=es2015,react
+BROWSERIFY := browserify
+ROLLUP := rollup
 UGLIFYJS := uglifyjs
 NUNJUCKS := nunjucks
 GZIP := gzip
+
 
 ifdef NO_LINT
 	LINTER := true
@@ -42,6 +60,7 @@ WWW_USER = www-data
 
 # directory structure
 INDEX_DIR := public
+PUBLISH_DIR := dist
 DIST_DIR := $(INDEX_DIR)/dist
 TEMPL_DIR := templates
 LIB_DIR := lib
@@ -125,6 +144,10 @@ vendor_size:
 install:
 	cp -R $(INDEX_DIR)/* $(PROD_DIR)
 	chown $(WWW_USER):$(WWW_USER) -R $(PROD_DIR)/*
+
+dist:
+	$(ROLLUP) lib/$(MAIN_ENTRY) -n $(MODULE_NAME) -f umd -o $(PUBLISH_DIR)/index.js -c .rollup.config.js 
+	npm publish
 	
 ###############################################################################
 # rules
@@ -135,7 +158,6 @@ $(INDEX_DIR)/index.html: $(TEMPL_DIR)/index.jinja
 	jq '.cdn_urls = "$(CDN_URLS)"' $(IDX_JSON) | sponge $(IDX_JSON)
 	$(NUNJUCKS) $(TEMPL_DIR)/index.jinja $(IDX_JSON)
 	mv $(TEMPL_DIR)/index.html $(INDEX_DIR)
-
 
 %.gz: %
 	$(GZIP) $< --stdout > $@
