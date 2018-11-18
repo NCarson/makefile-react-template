@@ -34,12 +34,12 @@ FAKING_IT := $(shell ruby script/test_config.rb $(NODE_DEV))
 ###############################################################################
 
 # plugins
-BABEL_PLUGINS := --plugins transform-react-jsx --plugins transform-class-properties
+BABEL_PLUGINS := --plugins transform-react-jsx,transform-object-rest-spread,transform-class-properties
 BROWSERIFY_SHIM := --transform browserify-global-shim 
 
 # these should be installed globally
 BABEL := babel $(BABEL_PLUGINS) --presets=es2015,react
-BROWSERIFY := browserify
+BROWSERIFY := browserify -t brfs
 ROLLUP := rollup
 UGLIFYJS := uglifyjs
 NUNJUCKS := nunjucks
